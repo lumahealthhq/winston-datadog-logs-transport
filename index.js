@@ -25,9 +25,16 @@ module.exports = class DatadogTransport extends Transport {
     this.metadata = {};
     config.apiKey = opts.apiKey;
 
-    if (opts.metadata.tags && Object.keys(opts.metadata.tags).length) {
+    if (opts.metadata) {
       const { metadata } = opts;
-      opts.metadata.tags = Object.keys(metadata.tags).map((curr) => `${curr}:${metadata.tags[curr]}`).join(',')
+
+      // tags in datadog
+      if (metadata.tags && Object.keys(metadata.tags).length) {
+        opts.metadata.ddtags = Object.keys(metadata.tags).map((curr) => `${curr}:${metadata.tags[curr]}`).join(',')
+      }
+
+      // source in datadog
+      opts.metadata.ddsource = opts.metadata.source || undefined;
     }
 
     if (opts.metadata) {
