@@ -25,14 +25,19 @@ module.exports = class DatadogTransport extends Transport {
     this.metadata = {};
     config.apiKey = opts.apiKey;
 
+    if (opts.metadata.tags && Object.keys(opts.metadata.tags).length) {
+      const { metadata } = opts;
+      opts.metadata.tags = Object.keys(metadata.tags).map((curr) => `${curr}:${metadata.tags[curr]}`).join(',')
+    }
+
     if (opts.metadata) {
       Object.assign(this.metadata, opts.metadata);
     }
   }
 
-  async log(level, message) {
+  async log(level, data) {
     setImmediate(() => {
-      this.emit('logged', message);
+      this.emit('logged', data);
     });
 
     const socket = tls
@@ -47,7 +52,7 @@ module.exports = class DatadogTransport extends Transport {
     }
 
     // Merge the metadata with the log
-    const logEntry = Object.assign({}, this.metadata, { level, message, source: 'dd-logs-transport', host });
+    const logEntry = Object.assign({}, this.metadata, { level, data, host });
 
     socket.write(`${config.apiKey} ${safeStringify(logEntry)}\r\n`, () => {
       socket.end();
