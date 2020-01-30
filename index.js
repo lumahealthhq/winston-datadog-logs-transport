@@ -27,7 +27,7 @@ module.exports = class DatadogTransport extends Transport {
     }
   }
 
-  async log(info, callback) {
+  async log(info) {
     setImmediate(() => {
       this.emit('logged', info);
     });
@@ -40,7 +40,7 @@ module.exports = class DatadogTransport extends Transport {
     await waitForConnection(socket);
 
     if (!socket.authorized) {
-      return callback('Error connecting to DataDog');
+      throw 'Error connecting to DataDog';
     }
 
     // Merge the metadata with the log
@@ -48,8 +48,6 @@ module.exports = class DatadogTransport extends Transport {
 
     socket.write(`${config.apiKey} ${safeStringify(logEntry)}\r\n`, () => {
       socket.end();
-
-      return callback();
     });
   }
 };
