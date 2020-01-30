@@ -1,9 +1,10 @@
 const tls = require('tls');
 const Transport = require('winston-transport');
 const safeStringify = require('fast-safe-stringify');
-
 const { hostname } = require('os');
 const host = hostname();
+
+let ddtrace = require('dd-trace');
 
 const config = {
   host: 'intake.logs.datadoghq.com',
@@ -42,9 +43,9 @@ module.exports = class DatadogTransport extends Transport {
     }
   }
 
-  async log(level, data) {
+  async log(level, data, other) {
     setImmediate(() => {
-      this.emit('logged', data);
+      this.emit('logged', data || other['0']);
     });
 
     const socket = tls
@@ -58,8 +59,18 @@ module.exports = class DatadogTransport extends Transport {
       throw 'Error connecting to DataDog';
     }
 
+    let metadata = this.metadata;
+    let datadog;
+    if (other.dd) {
+      metadata.ddtags = `span_id:${other.dd.span_id},trace_id:${other.dd.trace_id}`;
+      datadog = {
+        span_id: other.dd.span_id,
+        trace_id: other.dd.trace_id
+      }
+    }
+
     // Merge the metadata with the log
-    const logEntry = Object.assign({}, this.metadata, { level, data, host });
+    const logEntry = Object.assign({}, metadata, { level, data, host, datadog });
 
     socket.write(`${config.apiKey} ${safeStringify(logEntry)}\r\n`, () => {
       socket.end();
