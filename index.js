@@ -2,6 +2,9 @@ const tls = require('tls');
 const Transport = require('winston-transport');
 const safeStringify = require('fast-safe-stringify');
 
+const { hostname } = require('os');
+const host = hostname();
+
 const config = {
   host: 'intake.logs.datadoghq.com',
   port: 10516
@@ -27,9 +30,9 @@ module.exports = class DatadogTransport extends Transport {
     }
   }
 
-  async log(info) {
+  async log(level, message) {
     setImmediate(() => {
-      this.emit('logged', info);
+      this.emit('logged', message);
     });
 
     const socket = tls
@@ -44,7 +47,7 @@ module.exports = class DatadogTransport extends Transport {
     }
 
     // Merge the metadata with the log
-    const logEntry = Object.assign({}, this.metadata, info);
+    const logEntry = Object.assign({}, this.metadata, { level, message, source: 'dd-logs-transport', host });
 
     socket.write(`${config.apiKey} ${safeStringify(logEntry)}\r\n`, () => {
       socket.end();
