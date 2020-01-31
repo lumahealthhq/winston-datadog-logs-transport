@@ -60,17 +60,26 @@ module.exports = class DatadogTransport extends Transport {
     }
 
     let metadata = this.metadata;
-    let datadog;
+    let dd;
     if (other.dd) {
       metadata.ddtags = `span_id:${other.dd.span_id},trace_id:${other.dd.trace_id}`;
-      datadog = {
+      dd = {
         span_id: other.dd.span_id,
         trace_id: other.dd.trace_id
       }
     }
 
+    const logTagging = {
+      level,
+      data, 
+      host,
+      dd,
+      trace_id: dd.trace_id,
+      span_id: dd.span_id
+    }
+
     // Merge the metadata with the log
-    const logEntry = Object.assign({}, metadata, { level, data, host, datadog });
+    const logEntry = Object.assign({}, metadata, logTagging);
 
     socket.write(`${config.apiKey} ${safeStringify(logEntry)}\r\n`, () => {
       socket.end();
