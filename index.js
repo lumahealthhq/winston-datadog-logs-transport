@@ -74,8 +74,8 @@ module.exports = class DatadogTransport extends Transport {
       data, 
       host,
       dd,
-      trace_id: dd.trace_id,
-      span_id: dd.span_id
+      trace_id: dd && dd.trace_id,
+      span_id: dd && dd.span_id
     }
 
     // Merge the metadata with the log
