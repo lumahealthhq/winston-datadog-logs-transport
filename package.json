@@ -37,7 +37,8 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged"
+      "pre-commit": "lint-staged",
+      "commit-msg": "cross-env npm run commitmsg $HUSKY_GIT_PARAMS"
     }
   },
   "lint-staged": {
